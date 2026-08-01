@@ -38,11 +38,82 @@ npm install
 
 也可以在 GitHub 點擊 `Code` → `Download ZIP`，解壓縮後在該目錄執行 `npm install`。
 
-## 2. 啟動網站
+### Linux
 
-開發模式：
+Ubuntu／Debian：
 
 ```bash
+sudo apt update
+sudo apt install -y git curl ffmpeg
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash
+\. "$HOME/.nvm/nvm.sh"
+nvm install 24
+git clone https://github.com/liaozitw/hinami-fucheng-player.git
+cd hinami-fucheng-player
+npm install
+```
+
+Fedora：
+
+```bash
+sudo dnf install -y git curl ffmpeg-free
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash
+\. "$HOME/.nvm/nvm.sh"
+nvm install 24
+git clone https://github.com/liaozitw/hinami-fucheng-player.git
+cd hinami-fucheng-player
+npm install
+```
+
+Arch Linux：
+
+```bash
+sudo pacman -Syu --needed git nodejs npm ffmpeg
+git clone https://github.com/liaozitw/hinami-fucheng-player.git
+cd hinami-fucheng-player
+npm install
+```
+
+Linux 使用者加入目錄時，請輸入 `/home/user/Videos`、`/mnt/media/Movies` 等絕對路徑。
+
+### Windows 10／11
+
+開啟 PowerShell：
+
+```powershell
+winget install --id Git.Git -e
+winget install --id OpenJS.NodeJS.LTS -e
+winget install --id Gyan.FFmpeg -e
+```
+
+關閉並重新開啟 PowerShell：
+
+```powershell
+git --version
+node --version
+npm --version
+ffmpeg -version
+ffprobe -version
+git clone https://github.com/liaozitw/hinami-fucheng-player.git
+Set-Location hinami-fucheng-player
+npm install
+```
+
+若沒有 `winget`，從 Microsoft Store 安裝或更新「應用程式安裝程式」（App Installer）。也可以從 [Node.js 官方網站](https://nodejs.org/en/download) 下載 LTS MSI，並從 [FFmpeg 官方下載頁](https://ffmpeg.org/download.html) 選擇 Windows build。
+
+Windows 使用者請在前台輸入 `C:\Users\你的帳號\Videos` 或 `D:\Movies` 等完整路徑。
+
+## 2. 啟動網站
+
+macOS／Linux 開發模式：
+
+```bash
+npm run dev
+```
+
+Windows PowerShell 使用相同指令：
+
+```powershell
 npm run dev
 ```
 
@@ -63,7 +134,7 @@ Hinami Fucheng Player: http://localhost:8787
 
 1. 進入管理後台。
 2. 點右上角「加入新目錄」。
-3. macOS 會開啟 Finder 目錄選擇器。
+3. macOS 會開啟 Finder 目錄選擇器；Linux／Windows 請在前台輸入完整路徑。
 4. 選擇存放影片的資料夾。
 5. 目錄會出現在「影片來源」清單。
 

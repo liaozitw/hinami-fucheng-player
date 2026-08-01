@@ -48,6 +48,97 @@ ffmpeg -version
 ffprobe -version
 ```
 
+### Linux 安裝需求
+
+建議使用 Node.js 官方下載頁提供的 `nvm` 方式安裝目前的 LTS 版本。
+
+Ubuntu／Debian：
+
+```bash
+sudo apt update
+sudo apt install -y git curl ffmpeg
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash
+\. "$HOME/.nvm/nvm.sh"
+nvm install 24
+```
+
+Fedora：
+
+```bash
+sudo dnf install -y git curl ffmpeg-free
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash
+\. "$HOME/.nvm/nvm.sh"
+nvm install 24
+```
+
+Arch Linux：
+
+```bash
+sudo pacman -Syu --needed git nodejs npm ffmpeg
+```
+
+完成後確認：
+
+```bash
+node --version
+npm --version
+ffmpeg -version
+ffprobe -version
+```
+
+Linux 沒有 macOS Finder 選擇器。請在前台「加入目錄」視窗輸入絕對路徑，例如 `/home/user/Videos` 或 `/mnt/media/Movies`。
+
+### Windows 安裝需求
+
+在 Windows 10／11 開啟 PowerShell，使用 WinGet：
+
+```powershell
+winget install --id Git.Git -e
+winget install --id OpenJS.NodeJS.LTS -e
+winget install --id Gyan.FFmpeg -e
+```
+
+安裝完成後關閉並重新開啟 PowerShell，再確認：
+
+```powershell
+git --version
+node --version
+npm --version
+ffmpeg -version
+ffprobe -version
+```
+
+若系統沒有 `winget`，請先從 Microsoft Store 安裝或更新「應用程式安裝程式」（App Installer），也可從 [Node.js 官方下載頁](https://nodejs.org/en/download) 安裝 LTS MSI，並依 [FFmpeg 官方下載頁](https://ffmpeg.org/download.html) 提供的 Windows builds 安裝 FFmpeg。
+
+Windows 沒有 macOS Finder 選擇器。請從前台輸入完整路徑，例如：
+
+```text
+C:\Users\你的帳號\Videos
+D:\Movies
+```
+
+### 下載並啟動專案
+
+macOS／Linux：
+
+```bash
+git clone https://github.com/liaozitw/hinami-fucheng-player.git
+cd hinami-fucheng-player
+npm install
+npm run dev
+```
+
+Windows PowerShell：
+
+```powershell
+git clone https://github.com/liaozitw/hinami-fucheng-player.git
+Set-Location hinami-fucheng-player
+npm install
+npm run dev
+```
+
+參考來源：[Node.js 官方下載說明](https://nodejs.org/en/download)、[Microsoft WinGet 文件](https://learn.microsoft.com/windows/package-manager/winget/)、[FFmpeg 官方下載頁](https://ffmpeg.org/download.html)。
+
 ## 安裝與啟動
 
 ```bash
