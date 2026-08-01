@@ -8,6 +8,16 @@
     "type": "individual",
     "url": "https://www.facebook.com/tainanoutlook"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liaozitw/hinami-fucheng-player.git"
+  },
+  "bugs": {
+    "url": "https://github.com/liaozitw/hinami-fucheng-player/issues"
+  },
+  "engines": {
+    "node": ">=24"
+  },
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -17,24 +27,24 @@
     "start": "tsx server/index.ts --production"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "cors": "latest",
-    "express": "latest",
-    "hls.js": "latest",
-    "lucide-react": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "three": "latest",
-    "vite": "latest"
+    "@vitejs/plugin-react": "^6.0.5",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "hls.js": "^1.6.16",
+    "lucide-react": "^1.28.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "three": "^0.185.1",
+    "vite": "^8.2.0"
   },
   "devDependencies": {
-    "@types/cors": "latest",
-    "@types/express": "latest",
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "@types/three": "latest",
-    "tsx": "latest",
-    "typescript": "latest"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@types/three": "^0.185.3",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2"
   }
 }

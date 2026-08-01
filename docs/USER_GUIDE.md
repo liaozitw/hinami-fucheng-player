@@ -4,6 +4,8 @@
 
 這份教學適合第一次從 GitHub 下載並使用 Hinami Fucheng Player 的使用者。
 
+本程式需要 Node.js 24 LTS 或更新版本。
+
 ## 目錄
 
 1. [安裝程式](#1-安裝程式)

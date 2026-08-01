@@ -23,7 +23,7 @@ Your videos, paths, ratings, tags, and watch history stay on your own computer. 
 ## Requirements
 
 - macOS, Linux, or Windows 10/11
-- Node.js 20 or newer
+- Node.js 24 LTS or newer
 - npm
 - FFmpeg and FFprobe
 - Linux folder picker: Zenity or KDialog; full paths can always be entered manually

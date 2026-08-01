@@ -17,7 +17,7 @@ Hinami Fucheng Player は、TypeScript で開発されたローカル動画ラ�
 
 ## クイックスタート
 
-Node.js 20 以上、npm、FFmpeg、FFprobe が必要です。
+Node.js 24 LTS 以上、npm、FFmpeg、FFprobe が必要です。
 
 ```bash
 git clone https://github.com/liaozitw/hinami-fucheng-player.git
