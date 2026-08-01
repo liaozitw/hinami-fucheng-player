@@ -320,7 +320,7 @@ ffprobe -version
 
 MP4 也可能包含瀏覽器不支援的 codec；必要時可用 FFmpeg 轉成 H.264/AAC MP4。
 
-### 如何更新 GitHub 版本
+### 如何更新程式
 
 ```bash
 git pull
@@ -328,7 +328,7 @@ npm install
 npm run build
 ```
 
-更新前可備份 `.luma/library.sqlite`。`.luma` 不受 Git 管理，不會被 `git pull` 覆蓋。
+一般更新會保留原有的片庫、評分與播放記錄。如果這些資料很重要，更新前可另外複製 `.luma/library.sqlite` 作為備份。
 
 ## 14. 支持開發者
 
