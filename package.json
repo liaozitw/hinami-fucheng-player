@@ -1,0 +1,35 @@
+{
+  "name": "hinami-fucheng-player",
+  "description": "A private local video library and VR player by Hinami Fucheng.",
+  "author": "Hinami Fucheng",
+  "homepage": "https://www.tainanoutlook.com/blog/1003190263",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch server/index.ts",
+    "build": "tsc -b && vite build",
+    "start": "tsx server/index.ts --production"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "cors": "latest",
+    "express": "latest",
+    "hls.js": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "three": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "@types/cors": "latest",
+    "@types/express": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@types/three": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}
