@@ -357,9 +357,21 @@ git remote add origin https://github.com/<帳號>/<repository>.git
 git push -u origin main
 ```
 
-## 授權
+## 支持開發者
 
-目前未指定開源授權。若 repository 設為公開，其他人仍可閱讀程式碼，但在加入 LICENSE 前不代表授權他人使用、修改或散布。
+如果 Hinami Fucheng Player 對你有幫助，歡迎前往 [台南意向 Tainan Outlook Facebook 粉絲專頁](https://www.facebook.com/tainanoutlook) 按讚、追蹤、分享，並訂閱最新消息。你的支持能幫助這個專案持續改善，也能讓更多人認識它。
+
+## 授權與權利範圍
+
+本專案的原創程式碼與軟體文件採用 [MIT License](LICENSE)。使用、修改、散布或再授權時，必須保留 MIT 著作權及授權聲明；軟體以「現狀」提供，不附帶任何明示或默示保證。
+
+MIT License 僅適用於本 repository 的原創程式碼與軟體文件，不代表角色、名稱、插圖、照片、影片、音訊、Logo、文章或其他第三方內容也採用 MIT。
+
+- [完整 MIT License](LICENSE)
+- [品牌、角色與內容權利聲明](BRAND_AND_CONTENT_NOTICE.md)
+- [第三方套件授權聲明](THIRD_PARTY_NOTICES.md)
+
+使用者自行加入的影片仍受其原有著作權與使用條款約束。本軟體不提供影片內容，也不授予第三方媒體的使用權。
 
 ## 品牌與開發者人設
 

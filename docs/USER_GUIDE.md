@@ -17,6 +17,7 @@
 11. [Tags](#11-tags)
 12. [移除目錄與完全重置](#12-移除目錄與完全重置)
 13. [常見問題](#13-常見問題)
+14. [支持開發者](#14-支持開發者)
 
 ## 1. 安裝程式
 
@@ -326,3 +327,13 @@ npm run build
 ```
 
 更新前可備份 `.luma/library.sqlite`。`.luma` 不受 Git 管理，不會被 `git pull` 覆蓋。
+
+## 14. 支持開發者
+
+如果 Hinami Fucheng Player 對你有幫助，歡迎前往 [台南意向 Tainan Outlook Facebook 粉絲專頁](https://www.facebook.com/tainanoutlook)：
+
+- 按讚並追蹤粉絲專頁
+- 訂閱最新消息
+- 分享粉絲專頁或本專案給朋友
+
+謝謝你的支持，這會幫助 Hinami Fucheng Player 持續改善。

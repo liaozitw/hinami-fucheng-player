@@ -2,7 +2,12 @@
   "name": "hinami-fucheng-player",
   "description": "A private local video library and VR player by Hinami Fucheng.",
   "author": "Hinami Fucheng",
+  "license": "MIT",
   "homepage": "https://www.tainanoutlook.com/blog/1003190263",
+  "funding": {
+    "type": "individual",
+    "url": "https://www.facebook.com/tainanoutlook"
+  },
   "private": true,
   "version": "1.0.0",
   "type": "module",
