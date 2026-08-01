@@ -43,6 +43,29 @@ const excludedDirectories=()=>new Set((sql.prepare('SELECT pattern FROM scan_exc
 const browserNative = new Set(['.mp4','.webm','.m4v','.ogv']);
 const idFor = (path:string) => createHash('sha1').update(path).digest('hex').slice(0,16);
 const execFileAsync = promisify(execFile);
+const pickDirectory = async () => {
+  if (process.platform === 'darwin') {
+    const { stdout } = await execFileAsync('osascript', ['-e', 'POSIX path of (choose folder with prompt "選擇要加入 Hinami Player 的影片目錄")']);
+    return stdout.trim();
+  }
+  if (process.platform === 'win32') {
+    const script = "Add-Type -AssemblyName System.Windows.Forms; $dialog = New-Object System.Windows.Forms.FolderBrowserDialog; $dialog.Description = '選擇要加入 Hinami Player 的影片目錄'; if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::Write($dialog.SelectedPath) } else { exit 2 }";
+    const { stdout } = await execFileAsync('powershell.exe', ['-NoProfile', '-STA', '-Command', script], { encoding:'utf8' });
+    return stdout.trim();
+  }
+  if (process.platform === 'linux') {
+    try {
+      const { stdout } = await execFileAsync('zenity', ['--file-selection', '--directory', '--title=選擇要加入 Hinami Player 的影片目錄']);
+      return stdout.trim();
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException & {code?:string|number}).code;
+      if (code !== 'ENOENT') throw error;
+      const { stdout } = await execFileAsync('kdialog', ['--getexistingdirectory', '.', '--title', '選擇要加入 Hinami Player 的影片目錄']);
+      return stdout.trim();
+    }
+  }
+  throw new Error(`不支援 ${process.platform} 的資料夾選擇器，請輸入完整路徑。`);
+};
 
 function readDb():Library {
   const directories = (sql.prepare('SELECT path FROM directories ORDER BY path').all() as {path:string}[]).map(x => x.path);
@@ -162,7 +185,7 @@ app.get('/api/admin/ratings', (_q,r) => r.json(sql.prepare(`SELECT rating,COUNT(
 app.get('/api/history', (_q,r) => r.json(sql.prepare(`SELECT h.video_id AS videoId,h.watched_at AS watchedAt,h.progress,h.duration FROM playback_history h INNER JOIN videos v ON v.id=h.video_id ORDER BY h.watched_at DESC`).all()));
 app.put('/api/history/:id', (q,r) => { if(!sql.prepare('SELECT 1 FROM videos WHERE id=?').get(q.params.id))return r.status(404).json({error:'找不到影片。'}); const progress=Math.max(0,Number(q.body.progress)||0),duration=Math.max(0,Number(q.body.duration)||0); sql.prepare(`INSERT INTO playback_history(video_id,watched_at,progress,duration) VALUES (?,?,?,?) ON CONFLICT(video_id) DO UPDATE SET watched_at=excluded.watched_at,progress=excluded.progress,duration=excluded.duration`).run(q.params.id,Date.now(),progress,duration); r.json({ok:true}); });
 app.delete('/api/history', (_q,r) => { sql.exec('DELETE FROM playback_history'); r.json({ok:true}); });
-app.get('/api/admin/ratings/export', (q,r) => { const rating=String(q.query.rating||''); if(!['good','medium','bad'].includes(rating))return r.status(400).json({error:'無效的評分類型。'}); const rows=sql.prepare('SELECT name,path,extension,root_path FROM videos WHERE rating=? ORDER BY name').all(rating) as Record<string,unknown>[]; const label={good:'好',medium:'中等',bad:'不好'}[rating as 'good'|'medium'|'bad']; const cell=(value:unknown)=>`"${String(value??'').replaceAll('"','""')}"`; const csv='\uFEFF'+['評分','影片名稱','完整路徑','副檔名','來源目錄'].map(cell).join(',')+'\n'+rows.map(row=>[label,row.name,row.path,row.extension,row.root_path].map(cell).join(',')).join('\n'); r.setHeader('Content-Type','text/csv; charset=utf-8');r.setHeader('Content-Disposition',`attachment; filename="luma-${rating}-videos.csv"`);r.send(csv); });
+app.get('/api/admin/ratings/export', (q,r) => { const rating=String(q.query.rating||''); if(!['good','medium','bad'].includes(rating))return r.status(400).json({error:'Invalid rating.'}); const rows=sql.prepare('SELECT name,path,extension,root_path FROM videos WHERE rating=? ORDER BY name').all(rating) as Record<string,unknown>[]; const lang=String(q.query.lang||'en');const locale=lang==='zh-TW'?'zh-TW':lang==='ja'?'ja':'en';const labels={en:{ratings:['Good','Average','Bad'],headers:['Rating','Video name','Full path','Extension','Source directory']},'zh-TW':{ratings:['好','中等','不好'],headers:['評分','影片名稱','完整路徑','副檔名','來源目錄']},ja:{ratings:['良い','普通','良くない'],headers:['評価','動画名','フルパス','拡張子','ソースフォルダー']}}[locale];const label=labels.ratings[['good','medium','bad'].indexOf(rating)]; const cell=(value:unknown)=>`"${String(value??'').replaceAll('"','""')}"`; const csv='\uFEFF'+labels.headers.map(cell).join(',')+'\n'+rows.map(row=>[label,row.name,row.path,row.extension,row.root_path].map(cell).join(',')).join('\n'); r.setHeader('Content-Type','text/csv; charset=utf-8');r.setHeader('Content-Disposition',`attachment; filename="hinami-${rating}-videos.csv"`);r.send(csv); });
 app.put('/api/admin/extensions', (q,r) => { try { const values=Array.isArray(q.body.extensions)?q.body.extensions.map((x:unknown)=>String(x).toLowerCase()):[]; const unknown=values.filter((x:string)=>!supportedFormats.includes(x)); if(unknown.length)return r.status(400).json({error:`不支援的副檔名：${unknown.join(', ')}`}); const update=sql.prepare('UPDATE scan_extensions SET enabled=? WHERE extension=?'); sql.exec('BEGIN'); try { for(const extension of supportedFormats)update.run(Number(values.includes(extension)),extension); sql.exec('COMMIT'); }catch(error){sql.exec('ROLLBACK');throw error;} r.json(sql.prepare('SELECT extension,enabled FROM scan_extensions ORDER BY extension').all()); } catch(e) { r.status(400).json({error:e instanceof Error?e.message:String(e)}); } });
 app.put('/api/videos/:id/rating', (q,r) => { const rating=q.body.rating===null?null:String(q.body.rating); if(rating!==null&&!['good','medium','bad'].includes(rating))return r.status(400).json({error:'無效的評分。'}); const result=sql.prepare('UPDATE videos SET rating=? WHERE id=?').run(rating,q.params.id); if(!result.changes)return r.status(404).json({error:'找不到影片。'}); r.json({id:q.params.id,rating}); });
 app.post('/api/admin/directories/scan', (q,r) => { const dir=resolve(String(q.body.path||''));if(!readDb().directories.includes(dir))return r.status(404).json({error:'片庫中沒有這個路徑。'});const running=[...scanJobs.values()].find(job=>job.directory===dir&&job.status==='running');if(running)return r.status(409).json({error:'此目錄正在掃描中。',job:running});const job:ScanJob={id:createHash('sha1').update(dir+Date.now()).digest('hex').slice(0,12),directory:dir,status:'running',scannedFiles:0,foundVideos:0,currentPath:dir,cancelled:false,startedAt:Date.now()};scanJobs.set(job.id,job);void scanOne(dir,job).then(()=>{if(!job.cancelled){job.status='completed';job.finishedAt=Date.now();}}).catch(error=>{job.status='failed';job.error=error instanceof Error?error.message:String(error);job.finishedAt=Date.now();});r.status(202).json(job); });
@@ -170,15 +193,14 @@ app.post('/api/library/scan', async (_q,r) => { try { r.json(await scan()); } ca
 app.post('/api/library/directories', async (q,r) => { try { const dir=resolve(String(q.body.path||'')); if(!existsSync(dir)||!statSync(dir).isDirectory()) return r.status(400).json({error:'找不到這個目錄，請確認完整路徑。'}); r.json(await addDirectory(dir)); } catch(e) { r.status(500).json({error:String(e)}); } });
 app.delete('/api/library/directories', (q,r) => { try { const dir=resolve(String(q.body.path||'')); if(!readDb().directories.includes(dir)) return r.status(404).json({error:'片庫中沒有這個路徑。'}); r.json(removeDirectory(dir)); } catch(e) { r.status(500).json({error:String(e)}); } });
 app.post('/api/library/pick-directory', async (_q,r) => {
-  if (process.platform !== 'darwin') return r.status(501).json({error:'目前點選目錄功能支援 macOS，其他系統可先輸入完整路徑。'});
   let dir:string;
   try {
-    const { stdout } = await execFileAsync('osascript', ['-e', 'POSIX path of (choose folder with prompt "選擇要加入 Hinami Player 的影片目錄")']);
-    dir = resolve(stdout.trim());
+    dir = resolve(await pickDirectory());
     if (!dir || !existsSync(dir) || !statSync(dir).isDirectory()) return r.status(400).json({error:'未選擇有效的目錄。'});
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (message.includes('User canceled') || message.includes('-128')) return r.status(409).json({error:'已取消選擇。', canceled:true});
+    const code = (error as NodeJS.ErrnoException & {code?:string|number}).code;
+    if (message.includes('User canceled') || message.includes('-128') || ['1','2'].includes(String(code))) return r.status(409).json({error:'已取消選擇。', canceled:true});
     console.error('Folder picker failed:',message);
     return r.status(500).json({error:`無法開啟資料夾選擇器：${message.split('\n')[0]}`});
   }
