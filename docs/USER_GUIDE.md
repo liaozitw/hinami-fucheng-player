@@ -1,5 +1,7 @@
 # Hinami Fucheng Player 使用教學
 
+[English](../README.md) · [繁體中文](USER_GUIDE.md) · [日本語](README.ja.md)
+
 這份教學適合第一次從 GitHub 下載並使用 Hinami Fucheng Player 的使用者。
 
 ## 目錄
@@ -41,11 +43,11 @@ npm install
 
 ### Linux
 
-Ubuntu／Debian：
+Ubuntu／Debian（`zenity` 用於開啟圖形化目錄選擇器）：
 
 ```bash
 sudo apt update
-sudo apt install -y git curl ffmpeg
+sudo apt install -y git curl ffmpeg zenity
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash
 \. "$HOME/.nvm/nvm.sh"
 nvm install 24
@@ -135,7 +137,7 @@ Hinami Fucheng Player: http://localhost:8787
 
 1. 進入管理後台。
 2. 點右上角「加入新目錄」。
-3. macOS 會開啟 Finder 目錄選擇器；Linux／Windows 請在前台輸入完整路徑。
+3. macOS、Windows 會開啟系統資料夾選擇器；Linux 會使用 Zenity 或 KDialog。
 4. 選擇存放影片的資料夾。
 5. 目錄會出現在「影片來源」清單。
 

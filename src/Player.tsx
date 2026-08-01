@@ -3,10 +3,12 @@ import Hls from 'hls.js';
 import * as THREE from 'three';
 import { ArrowLeft, Frown, Maximize, Meh, Pause, Play, Rotate3D, RotateCcw, Smile, Volume2, VolumeX, ZoomIn, ZoomOut } from 'lucide-react';
 import type { Video } from './types';
+import { useI18n } from './i18n';
 
 type Props = { video: Video; onClose: () => void };
 
 export default function Player({ video, onClose }: Props) {
+  const {t}=useI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
   const vrRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -77,12 +79,12 @@ export default function Player({ video, onClose }: Props) {
   const time = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   return <div className={`player-page ${uiVisible ? 'ui-visible' : 'ui-hidden'}`} onPointerMove={revealUi} onPointerDown={revealUi} onTouchStart={revealUi} onWheel={e=>{e.preventDefault();revealUi();changeZoom(e.deltaY<0?.1:-.1);}}>
     <video ref={videoRef} className={vr ? 'source-video hidden' : 'source-video'} style={!vr?{transform:`scale(${zoom})`}:undefined} playsInline onPlay={() => setPlaying(true)} onPause={e => {setPlaying(false);fetch(`/api/history/${video.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({progress:e.currentTarget.currentTime,duration:e.currentTarget.duration||0}),keepalive:true}).catch(()=>undefined);}} onTimeUpdate={e => setProgress(e.currentTarget.currentTime)} onDurationChange={e => setDuration(e.currentTarget.duration || 0)} />
-    {vr && <div className="vr-stage" ref={vrRef}><span className="drag-tip player-overlay">拖曳畫面探索 360° 視角</span></div>}
-    <button className="player-back player-overlay" onClick={onClose}><ArrowLeft/> 返回片庫</button>
-    <div className="player-title player-overlay"><span>{video.name}</span><small>{video.extension.toUpperCase()} {vr ? ' · 沉浸模式' : ''}</small></div>
+    {vr && <div className="vr-stage" ref={vrRef}><span className="drag-tip player-overlay">{t('dragVr')}</span></div>}
+    <button className="player-back player-overlay" onClick={onClose}><ArrowLeft/> {t('backLibrary')}</button>
+    <div className="player-title player-overlay"><span>{video.name}</span><small>{video.extension.toUpperCase()} {vr ? ` · ${t('immersive')}` : ''}</small></div>
     <div className="controls player-overlay" onPointerEnter={() => { if (hideTimer.current) clearTimeout(hideTimer.current); setUiVisible(true); }} onPointerLeave={revealUi}>
       <input aria-label="播放進度" type="range" min="0" max={duration || 1} value={progress} onChange={e => { videoRef.current!.currentTime = Number(e.target.value); }} />
-      <div className="control-row"><button onClick={toggle}>{playing ? <Pause/> : <Play/>}</button><button onClick={() => { videoRef.current!.muted = !muted; setMuted(!muted); }}>{muted ? <VolumeX/> : <Volume2/>}</button><span>{time(progress)} / {time(duration)}</span><span className="spacer"/><div className="zoom-controls"><button onClick={()=>changeZoom(-.1)} title="縮小"><ZoomOut/></button><button className="zoom-value" onClick={()=>setZoom(1)} title="重設縮放">{Math.round(zoom*100)}%</button><button onClick={()=>changeZoom(.1)} title="放大"><ZoomIn/></button><button onClick={()=>setZoom(1)} title="重設為 100%"><RotateCcw/></button></div><div className="rating-controls"><span>我的評分</span><button className={rating==='good'?'active good':''} onClick={()=>rate('good')} title="好"><Smile/></button><button className={rating==='medium'?'active medium':''} onClick={()=>rate('medium')} title="中等"><Meh/></button><button className={rating==='bad'?'active bad':''} onClick={()=>rate('bad')} title="不好"><Frown/></button></div><button className={vr ? 'active' : ''} onClick={() => setVr(!vr)} title="切換 VR 模式"><Rotate3D/></button><button onClick={() => document.documentElement.requestFullscreen()}><Maximize/></button></div>
+      <div className="control-row"><button onClick={toggle}>{playing ? <Pause/> : <Play/>}</button><button onClick={() => { videoRef.current!.muted = !muted; setMuted(!muted); }}>{muted ? <VolumeX/> : <Volume2/>}</button><span>{time(progress)} / {time(duration)}</span><span className="spacer"/><div className="zoom-controls"><button onClick={()=>changeZoom(-.1)} title={t('zoomOut')}><ZoomOut/></button><button className="zoom-value" onClick={()=>setZoom(1)} title={t('resetZoom')}>{Math.round(zoom*100)}%</button><button onClick={()=>changeZoom(.1)} title={t('zoomIn')}><ZoomIn/></button><button onClick={()=>setZoom(1)} title={t('resetZoom')}><RotateCcw/></button></div><div className="rating-controls"><span>{t('myRating')}</span><button className={rating==='good'?'active good':''} onClick={()=>rate('good')} title={t('good')}><Smile/></button><button className={rating==='medium'?'active medium':''} onClick={()=>rate('medium')} title={t('medium')}><Meh/></button><button className={rating==='bad'?'active bad':''} onClick={()=>rate('bad')} title={t('bad')}><Frown/></button></div><button className={vr ? 'active' : ''} onClick={() => setVr(!vr)} title={t('toggleVr')}><Rotate3D/></button><button onClick={() => document.documentElement.requestFullscreen()}><Maximize/></button></div>
     </div>
   </div>;
 }

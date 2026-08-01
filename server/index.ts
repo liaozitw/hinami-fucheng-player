@@ -43,6 +43,29 @@ const excludedDirectories=()=>new Set((sql.prepare('SELECT pattern FROM scan_exc
 const browserNative = new Set(['.mp4','.webm','.m4v','.ogv']);
 const idFor = (path:string) => createHash('sha1').update(path).digest('hex').slice(0,16);
 const execFileAsync = promisify(execFile);
+const pickDirectory = async () => {
+  if (process.platform === 'darwin') {
+    const { stdout } = await execFileAsync('osascript', ['-e', 'POSIX path of (choose folder with prompt "選擇要加入 Hinami Player 的影片目錄")']);
+    return stdout.trim();
+  }
+  if (process.platform === 'win32') {
+    const script = "Add-Type -AssemblyName System.Windows.Forms; $dialog = New-Object System.Windows.Forms.FolderBrowserDialog; $dialog.Description = '選擇要加入 Hinami Player 的影片目錄'; if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::Write($dialog.SelectedPath) } else { exit 2 }";
+    const { stdout } = await execFileAsync('powershell.exe', ['-NoProfile', '-STA', '-Command', script], { encoding:'utf8' });
+    return stdout.trim();
+  }
+  if (process.platform === 'linux') {
+    try {
+      const { stdout } = await execFileAsync('zenity', ['--file-selection', '--directory', '--title=選擇要加入 Hinami Player 的影片目錄']);
+      return stdout.trim();
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException & {code?:string|number}).code;
+      if (code !== 'ENOENT') throw error;
+      const { stdout } = await execFileAsync('kdialog', ['--getexistingdirectory', '.', '--title', '選擇要加入 Hinami Player 的影片目錄']);
+      return stdout.trim();
+    }
+  }
+  throw new Error(`不支援 ${process.platform} 的資料夾選擇器，請輸入完整路徑。`);
+};
 
 function readDb():Library {
   const directories = (sql.prepare('SELECT path FROM directories ORDER BY path').all() as {path:string}[]).map(x => x.path);
@@ -170,15 +193,14 @@ app.post('/api/library/scan', async (_q,r) => { try { r.json(await scan()); } ca
 app.post('/api/library/directories', async (q,r) => { try { const dir=resolve(String(q.body.path||'')); if(!existsSync(dir)||!statSync(dir).isDirectory()) return r.status(400).json({error:'找不到這個目錄，請確認完整路徑。'}); r.json(await addDirectory(dir)); } catch(e) { r.status(500).json({error:String(e)}); } });
 app.delete('/api/library/directories', (q,r) => { try { const dir=resolve(String(q.body.path||'')); if(!readDb().directories.includes(dir)) return r.status(404).json({error:'片庫中沒有這個路徑。'}); r.json(removeDirectory(dir)); } catch(e) { r.status(500).json({error:String(e)}); } });
 app.post('/api/library/pick-directory', async (_q,r) => {
-  if (process.platform !== 'darwin') return r.status(501).json({error:'目前點選目錄功能支援 macOS，其他系統可先輸入完整路徑。'});
   let dir:string;
   try {
-    const { stdout } = await execFileAsync('osascript', ['-e', 'POSIX path of (choose folder with prompt "選擇要加入 Hinami Player 的影片目錄")']);
-    dir = resolve(stdout.trim());
+    dir = resolve(await pickDirectory());
     if (!dir || !existsSync(dir) || !statSync(dir).isDirectory()) return r.status(400).json({error:'未選擇有效的目錄。'});
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (message.includes('User canceled') || message.includes('-128')) return r.status(409).json({error:'已取消選擇。', canceled:true});
+    const code = (error as NodeJS.ErrnoException & {code?:string|number}).code;
+    if (message.includes('User canceled') || message.includes('-128') || code === '1' || code === '2') return r.status(409).json({error:'已取消選擇。', canceled:true});
     console.error('Folder picker failed:',message);
     return r.status(500).json({error:`無法開啟資料夾選擇器：${message.split('\n')[0]}`});
   }
