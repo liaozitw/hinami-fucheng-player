@@ -303,9 +303,9 @@ RESET
 lsof -nP -iTCP:8787 -sTCP:LISTEN
 ```
 
-### 轉碼很慢或 CPU 很高
+### 哪些格式可以直接播放
 
-WMV、AVI、MKV、MOV 等格式可能需要 FFmpeg 轉碼。長影片、4K 或高幀率影片第一次播放時會使用較多 CPU。
+播放器不會在播放時轉碼，所有影片都直接串流原始檔案。MP4、WebM 等格式通常支援較好；WMV、AVI、MKV、MOV 或 HEVC 是否能播放，取決於 Windows 與瀏覽器安裝的解碼器。
 
 ### 目錄掃描看起來沒有結束
 
@@ -313,14 +313,7 @@ WMV、AVI、MKV、MOV 等格式可能需要 FFmpeg 轉碼。長影片、4K 或�
 
 ### 影片播放失敗
 
-先確認 FFmpeg 正常：
-
-```bash
-ffmpeg -version
-ffprobe -version
-```
-
-MP4 也可能包含瀏覽器不支援的 codec；必要時可用 FFmpeg 轉成 H.264/AAC MP4。
+先確認影片可在目前瀏覽器播放。即使副檔名是 MP4，也可能包含瀏覽器不支援的 codec；必要時可在播放前自行轉成 H.264/AAC MP4。
 
 ### 如何更新程式
 

@@ -15,8 +15,7 @@ Browser
    └── Express :8787
          ├── Library API
          ├── SQLite
-         ├── 原生影片 Range streaming
-         ├── FFmpeg HLS transcoding
+         ├── 原始影片 Range streaming
          └── FFmpeg thumbnails
 ```
 
@@ -67,18 +66,7 @@ Browser
 
 ## 影片播放
 
-瀏覽器原生格式透過支援 HTTP Range 的 `/api/video/:id` 提供。
-
-其他格式透過 FFmpeg 轉成 HLS：
-
-```text
-source video
-  → H.264 video
-  → AAC audio
-  → master.m3u8 + segment*.ts
-```
-
-Hls.js 負責在支援 Media Source Extensions 的瀏覽器播放轉碼結果。
+所有格式都透過支援 HTTP Range 的 `/api/video/:id` 直接提供原始檔案，不在播放時轉碼。伺服器會依副檔名回傳 MIME type，並驗證瀏覽器送出的位元範圍。實際能否播放取決於瀏覽器與作業系統是否支援影片內部的影音編碼。
 
 ## VR 播放器
 

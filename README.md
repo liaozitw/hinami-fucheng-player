@@ -2,7 +2,7 @@
 
 [English](README.md) · [繁體中文](docs/USER_GUIDE.md) · [日本語](docs/README.ja.md)
 
-Hinami Fucheng Player is a private, cross-platform video library and VR player built with TypeScript. It indexes local folders, generates thumbnails, streams browser-native formats directly, and uses FFmpeg to convert other formats to HLS when needed.
+Hinami Fucheng Player is a private, cross-platform video library and VR player built with TypeScript. It indexes local folders, generates thumbnails, and streams original video files directly without playback transcoding.
 
 Your videos, paths, ratings, tags, and watch history stay on your own computer. The application does not upload your media to a cloud service.
 
@@ -13,7 +13,8 @@ Your videos, paths, ratings, tags, and watch history stay on your own computer. 
 - Independent scan controls for every source directory
 - Configurable video extensions and excluded folders
 - Folder hierarchy converted into searchable Tags
-- Direct MP4/WebM playback and FFmpeg-powered HLS conversion
+- Direct original-file streaming with byte-range seeking
+- Dedicated category and source-directory browsing with pagination
 - 180°/360° VR viewing with drag and zoom controls
 - Private Good/Average/Bad ratings with CSV export
 - Local watch history and playback progress
@@ -118,7 +119,7 @@ The service must run on the same computer that stores the videos. A browser on a
 Runtime data is stored under `.luma/` and excluded from Git:
 
 - `library.sqlite`: directories, video index, ratings, history, Tags, and settings
-- `cache/`: generated thumbnails and HLS segments
+- `cache/`: generated thumbnails
 
 Removing a source or performing a full reset does not delete, move, or modify the original videos.
 
