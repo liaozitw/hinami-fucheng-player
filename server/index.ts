@@ -207,7 +207,32 @@ app.post('/api/library/pick-directory', async (_q,r) => {
   try { r.json(await addDirectory(dir)); }
   catch(error) { const message=error instanceof Error?error.message:String(error); console.error('Adding directory failed:',message); r.status(400).json({error:message}); }
 });
-app.get('/api/video/:id', (q,r) => { const v=findVideo(q.params.id); if(!v)return r.sendStatus(404); const size=statSync(v.path).size, range=q.headers.range; r.setHeader('Accept-Ranges','bytes'); if(!range){r.setHeader('Content-Length',size);return createReadStream(v.path).pipe(r);} const [a,b]=range.replace('bytes=','').split('-'), start=Number(a), end=b?Number(b):size-1; r.status(206).set({'Content-Range':`bytes ${start}-${end}/${size}`,'Content-Length':String(end-start+1),'Content-Type':v.extension==='webm'?'video/webm':'video/mp4'}); createReadStream(v.path,{start,end}).pipe(r); });
+app.get('/api/video/:id', (q,r) => {
+  const v=findVideo(q.params.id);
+  if(!v)return r.sendStatus(404);
+  let size:number;
+  try { size=statSync(v.path).size; }
+  catch { return r.status(404).json({error:'影片檔案不存在或無法讀取。'}); }
+  const contentType:Record<string,string>={mp4:'video/mp4',m4v:'video/x-m4v',webm:'video/webm',ogv:'video/ogg',mov:'video/quicktime',mkv:'video/x-matroska',wmv:'video/x-ms-wmv',avi:'video/x-msvideo',mpeg:'video/mpeg',mpg:'video/mpeg',ts:'video/mp2t',mts:'video/mp2t',m2ts:'video/mp2t'};
+  const range=q.headers.range;
+  r.set({'Accept-Ranges':'bytes','Content-Type':contentType[v.extension]||'application/octet-stream','Cache-Control':'private, no-cache'});
+  let start=0,end=size-1;
+  if(range){
+    const match=/^bytes=(\d*)-(\d*)$/.exec(range);
+    if(!match)return r.status(416).set('Content-Range',`bytes */${size}`).end();
+    if(!match[1]&&match[2]){const suffix=Number(match[2]);start=Math.max(0,size-suffix);}
+    else {start=Number(match[1]);if(match[2])end=Number(match[2]);}
+    if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||start>=size||end<start){
+      return r.status(416).set('Content-Range',`bytes */${size}`).end();
+    }
+    end=Math.min(end,size-1);
+    r.status(206).set({'Content-Range':`bytes ${start}-${end}/${size}`,'Content-Length':String(end-start+1)});
+  } else r.set('Content-Length',String(size));
+  const stream=createReadStream(v.path,{start,end});
+  stream.on('error',error=>{console.error('Video stream failed:',error.message);if(!r.headersSent)r.sendStatus(500);else r.destroy(error);});
+  r.on('close',()=>stream.destroy());
+  stream.pipe(r);
+});
 const processes = new Map<string,ReturnType<typeof spawn>>();
 const thumbnailFallback=(name:string,wide:boolean)=>`<svg xmlns="http://www.w3.org/2000/svg" width="${wide?1280:640}" height="${wide?720:360}" viewBox="0 0 640 360"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#20262b"/><stop offset="1" stop-color="#0e1114"/></linearGradient></defs><rect width="640" height="360" fill="url(#g)"/><circle cx="320" cy="165" r="38" fill="#b7ff34" opacity=".9"/><path d="M310 143l31 22-31 22z" fill="#101309"/><text x="320" y="235" text-anchor="middle" fill="#92999f" font-family="sans-serif" font-size="15">${name.replace(/[&<>"']/g,c=>`&#${c.charCodeAt(0)};`)}</text></svg>`;
 app.get('/api/thumbnail/:id', (q,r) => {
@@ -220,7 +245,6 @@ app.get('/api/thumbnail/:id', (q,r) => {
   const p=spawn('ffmpeg',['-loglevel','error','-ss','00:00:01','-i',v.path,'-frames:v','1','-vf',`scale=${size}:force_original_aspect_ratio=increase,crop=${size}`,'-q:v','3','-y',file]);
   p.once('error',fallback); p.once('close',()=>existsSync(file)&&statSync(file).size>0?send():fallback());
 });
-app.get('/api/hls/:id/:file', (q,r) => { const v=findVideo(q.params.id); if(!v)return r.sendStatus(404); const dir=join(cacheDir,v.id), target=join(dir,q.params.file); mkdirSync(dir,{recursive:true}); if(existsSync(target))return r.sendFile(target); if(!processes.has(v.id)){const p=spawn('ffmpeg',['-i',v.path,'-c:v','libx264','-preset','veryfast','-crf','22','-c:a','aac','-b:a','160k','-f','hls','-hls_time','4','-hls_list_size','0','-hls_segment_filename',join(dir,'segment%05d.ts'),join(dir,'master.m3u8')]); processes.set(v.id,p);p.on('close',()=>processes.delete(v.id));} let tries=0;const timer=setInterval(()=>{if(existsSync(target)){clearInterval(timer);r.sendFile(target);}else if(++tries>600){clearInterval(timer);r.status(504).json({error:'轉碼逾時'});}},100); });
 if(process.argv.includes('--production')) { app.use(express.static(join(root,'dist'))); app.use((q,r,next)=>q.method==='GET'&&!q.path.startsWith('/api/')?r.sendFile(join(root,'dist','index.html')):next()); }
 else { const vite=await createViteServer({root,server:{middlewareMode:true},appType:'spa'}); app.use(vite.middlewares); }
 app.listen(8787,'127.0.0.1',()=>console.log('Hinami Fucheng Player: http://localhost:8787'));

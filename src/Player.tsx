@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import Hls from 'hls.js';
 import * as THREE from 'three';
 import { ArrowLeft, Frown, Maximize, Meh, Pause, Play, Rotate3D, RotateCcw, Smile, Volume2, VolumeX, ZoomIn, ZoomOut } from 'lucide-react';
 import type { Video } from './types';
@@ -21,16 +20,17 @@ export default function Player({ video, onClose }: Props) {
   const vrCameraRef=useRef<THREE.PerspectiveCamera|null>(null);
   const [uiVisible, setUiVisible] = useState(true);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const src = video.native ? `/api/video/${video.id}` : `/api/hls/${video.id}/master.m3u8`;
+  const src = `/api/video/${video.id}`;
+  const [playbackError,setPlaybackError]=useState('');
+  const [buffering,setBuffering]=useState(false);
 
   useEffect(() => {
     const el = videoRef.current!;
-    let hls: Hls | undefined;
-    if (!video.native && Hls.isSupported()) { hls = new Hls(); hls.loadSource(src); hls.attachMedia(el); }
-    else el.src = src;
+    el.src = src;
+    el.load();
     el.play().catch(() => undefined);
-    return () => hls?.destroy();
-  }, [src, video.native]);
+    return () => { el.pause();el.removeAttribute('src');el.load(); };
+  }, [src]);
   useEffect(() => {
     const save=()=>{const el=videoRef.current;if(!el)return;fetch(`/api/history/${video.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({progress:el.currentTime||0,duration:Number.isFinite(el.duration)?el.duration:0}),keepalive:true}).catch(()=>undefined);};
     save();
@@ -78,7 +78,8 @@ export default function Player({ video, onClose }: Props) {
   const changeZoom=(delta:number)=>setZoom(value=>Math.max(.6,Math.min(2.5,Math.round((value+delta)*10)/10)));
   const time = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   return <div className={`player-page ${uiVisible ? 'ui-visible' : 'ui-hidden'}`} onPointerMove={revealUi} onPointerDown={revealUi} onTouchStart={revealUi} onWheel={e=>{e.preventDefault();revealUi();changeZoom(e.deltaY<0?.1:-.1);}}>
-    <video ref={videoRef} className={vr ? 'source-video hidden' : 'source-video'} style={!vr?{transform:`scale(${zoom})`}:undefined} playsInline onPlay={() => setPlaying(true)} onPause={e => {setPlaying(false);fetch(`/api/history/${video.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({progress:e.currentTarget.currentTime,duration:e.currentTarget.duration||0}),keepalive:true}).catch(()=>undefined);}} onTimeUpdate={e => setProgress(e.currentTarget.currentTime)} onDurationChange={e => setDuration(e.currentTarget.duration || 0)} />
+    <video ref={videoRef} className={vr ? 'source-video hidden' : 'source-video'} style={!vr?{transform:`scale(${zoom})`}:undefined} playsInline preload="metadata" onPlay={() => {setPlaying(true);setBuffering(false);}} onPlaying={()=>setBuffering(false)} onWaiting={()=>setBuffering(true)} onCanPlay={()=>setBuffering(false)} onError={()=>{setPlaying(false);setBuffering(false);setPlaybackError(t('unsupportedPlayback'));}} onPause={e => {setPlaying(false);fetch(`/api/history/${video.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({progress:e.currentTarget.currentTime,duration:e.currentTarget.duration||0}),keepalive:true}).catch(()=>undefined);}} onTimeUpdate={e => setProgress(e.currentTarget.currentTime)} onDurationChange={e => setDuration(Number.isFinite(e.currentTarget.duration)?e.currentTarget.duration:0)} />
+    {(buffering||playbackError)&&<div className={`playback-status ${playbackError?'failed':''}`}>{playbackError||t('buffering')}</div>}
     {vr && <div className="vr-stage" ref={vrRef}><span className="drag-tip player-overlay">{t('dragVr')}</span></div>}
     <button className="player-back player-overlay" onClick={onClose}><ArrowLeft/> {t('backLibrary')}</button>
     <div className="player-title player-overlay"><span>{video.name}</span><small>{video.extension.toUpperCase()} {vr ? ` · ${t('immersive')}` : ''}</small></div>
